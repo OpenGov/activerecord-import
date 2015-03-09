@@ -185,11 +185,7 @@ class ActiveRecord::Base
           # this next line breaks sqlite.so with a segmentation fault
           # if model.new_record? || options[:on_duplicate_key_update]
             column_names.map do |name|
-              value = model.send( "#{name}_before_type_cast" )
-              if name == 'id' && value.kind_of?(Array)
-                value = value[-1]  # (labrams) account for composite primary keys
-              end
-              value
+              model.send( "#{name}_before_type_cast" )
             end
           # end
         end
@@ -256,14 +252,7 @@ class ActiveRecord::Base
       # validation we'll use the index to remove it from the array_of_attributes
       arr.each_with_index do |hsh,i|
         instance = new do |model|
-          hsh.each_pair do |k,v|
-            # Account for composite primary keys
-            if k == 'id' and model.respond_to?(:ref_id=)
-              model.ref_id = v
-            else
-              model.send("#{k}=", v)
-            end
-          end
+          hsh.each_pair{ |k,v| model.send("#{k}=", v) }
         end
         if not instance.valid?
           array_of_attributes[ i ] = nil
